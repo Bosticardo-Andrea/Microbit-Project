@@ -39,6 +39,9 @@ This project is a microbit-controlled Tris.
 Sockets are used to enable the server and client to communicate.
 The threads are used to be able to constantly read the data obtained from the serial, sent by the microbit, and for the tkinter window.
 To move inside the field you have to press the A (down), B (right) keys, while moving it you place the token.
+to run the code you must be on the Wifi network, moreover, you need to know your IP, (if you don't know how to do it click here) and change these lines:
+- [client](https://github.com/Bosticardo-Andrea/Microbit-Project/blob/main/TicTacToeClient.py): line 163 add to it with: "s.connect ((" Your IP ", 8000))"
+- [server](https://github.com/Bosticardo-Andrea/Microbit-Project/blob/main/TicTacToeServer.py): line 159 substituted with: "s.connect ((" Your IP ", 8000))"
 
 ## Contributor:
 @[DavideRebuffo](https://github.com/DavideRebuffo)

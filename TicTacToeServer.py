@@ -1,5 +1,6 @@
-#made by bosticardo
-import socket,os,time,pygame,sys,serial
+#made by Bosticado Andrea and Rebuffo Davide
+#Istruzioni:https://it.wikipedia.org/wiki/Tris_(gioco)
+import socket,os,time,pygame,sys,serial,webbrowser
 import serial.tools.list_ports
 from threading import Thread
 import tkinter as tk 
@@ -60,25 +61,24 @@ class MyThread(Thread):
             TestoG2 = fnt2.render("".join([self.g2," = ",self.giocatori[self.g2]]), True, (0,255,0))
             screen.blit(TestoG2, (10,425))
             mossa = str(coda.dequeue())
-            if mossa != None: (mossa)
-            if mossa[0] == "a":
-                if self.posizione == 6: self.posizione = 0
-                elif self.posizione == 7: self.posizione = 1
-                elif self.posizione == 8: self.posizione = 2
-                else:self.posizione = self.posizione + 3
-            if mossa[0] == "b":
-                if self.posizione == 2 :self.posizione = 0
-                elif self.posizione == 5: self.posizione = 3
-                elif self.posizione == 8: self.posizione = 6
-                else: self.posizione = self.posizione +  1   
-                     
-            if (mossa[0] == "m") and (self.ok):
-                m = self.posizione
-                m = controllo(m,self.g1,self.griglia,self.giocatori)
-                if m != None:
-                        self.connect.sendall(str(m).encode())
-                        self.ok = False
-            #print(self.posizione)
+            if mossa != None:
+                if mossa[0] == "a":
+                    if self.posizione == 6: self.posizione = 0
+                    elif self.posizione == 7: self.posizione = 1
+                    #https://www.galleriameme.it/
+                    elif self.posizione == 8: self.posizione = 2
+                    else:self.posizione = self.posizione + 3
+                if mossa[0] == "b":
+                    if self.posizione == 2 :self.posizione = 0
+                    elif self.posizione == 5: self.posizione = 3
+                    elif self.posizione == 8: self.posizione = 6
+                    else: self.posizione = self.posizione +  1      
+                if (mossa[0] == "m") and (self.ok):
+                    m = self.posizione
+                    m = controllo(m,self.g1,self.griglia,self.giocatori)
+                    if m != None:
+                            self.connect.sendall(str(m).encode())
+                            self.ok = False
             if self.tipo != None:
                 if self.tipo == 3:
                     pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
@@ -96,7 +96,6 @@ class MyThread(Thread):
             pygame.display.flip() 
     def linea(self,s,e):
         self.inizio,self.end = self.dizioCoordinate[s],self.dizioCoordinate[e]
-
 class MyThread2(Thread):
     def __init__(self):
         Thread.__init__(self)
@@ -125,12 +124,14 @@ class MyThread2(Thread):
 class GUI(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.geometry('450x200')
+        self.geometry('500x250')
         self.title("Nome")
         self.grid_columnconfigure(0, weight=1)
-        self.textwidget = tk.Text()
+        self.textwidget = tk.Label(self,
+                                    text="Inserire il nome, poi chiudere la finestra\n",
+                                    font=("Helvetica", 15))
         self.text_input = tk.Entry()
-        self.name = None
+        self.name = "giocatore 1"
         self.crea()
     def crea(self):
         welcome_label = tk.Label(self,
@@ -138,10 +139,17 @@ class GUI(tk.Tk):
                                     font=("Helvetica", 15))
         welcome_label.grid(row=0, column=0, sticky="WE", padx=10, pady=10)                       
         self.text_input.grid(row=1, column=0, sticky="WE", padx=10)
-        self.textwidget.insert(tk.END, "Inserire il nome, poi chiudere la finestra\n")
-        self.textwidget.grid(row=3, column=0, sticky="WE", padx=10, pady=10)
+        self.textwidget.grid(row=2, column=0, sticky="N", padx=10, pady=10)
         download_button = tk.Button(text="Enter", command=self.nome)
         download_button.grid(row=1, column=1, sticky="WE", pady=10, padx=10)
+        link_button = tk.Button(text="instructions", command=self.rules)
+        link_button.grid(row=3, sticky="WE", pady=0, padx=10)
+        gitHub_button = tk.Button(text="gitHub", command=self.gitHub)
+        gitHub_button.grid(row=4, sticky="WE", pady=0, padx=10)
+    def rules(self):
+        webbrowser.open_new(r"https://it.wikipedia.org/wiki/Tris_(gioco)")
+    def gitHub():
+        webbrowser.open_new(r"https://github.com/Bosticardo-Andrea/Microbit-Project")
     def nome(self,):
         if self.text_input.get():
             user_input = self.text_input.get()
@@ -150,10 +158,11 @@ class GUI(tk.Tk):
             print(self.name)
         else:
             nome = "Inserire il nome, poi chiudere la finestra\n"
-        self.textwidget.delete (1.0,"end")
-        self.textwidget.insert(tk.END, nome)
-        self.textwidget.grid(row=3, column=0, sticky="WE", padx=10, pady=10)
-
+        self.textwidget.destroy()
+        self.textwidget = tk.Label(self,
+                                    text=nome,
+                                    font=("Helvetica", 15))
+        self.textwidget.grid(row=2, column=0, sticky="WE", padx=10, pady=10)
 def connessione():
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     s.bind(("127.0.0.1",8000))
@@ -163,9 +172,6 @@ def connessione():
     connect,address = s.accept()
     return connect,address
 def controllo(x,g,griglia,giocatori):
-    """Si effettua il controllo del numero inserito:
-    - Nel caso la cella sia occupata
-    - Nel caso il numero non si corretto < 0 o > 8"""
     if((griglia[x] == " ")):       
         print("Cella occupata")
         #x = int(input("Inserici mossa:"))
@@ -202,6 +208,7 @@ def vittoria(griglia,disegno):
     elif( (griglia[2]==griglia[5]==griglia[8]) & (griglia[2]!=" ")):
         disegno.linea(2,8)
         vittoria = True
+        #https://worlds-highest-website.com/it/
     elif ((griglia[0]==griglia[4]==griglia[8]) & (griglia[0]!=" ")):
         disegno.linea(0,8)
         vittoria = True 
@@ -271,4 +278,4 @@ def main():
     disegno.running = False
     disegno.join()
 if __name__=="__main__":
-    main() 
+    main()                                                                                                                                                                                                                                                                                                                                                                                              #gitHub link: https://github.com/Bosticardo-Andrea/Microbit-Project

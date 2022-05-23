@@ -26,6 +26,7 @@ Instead, to run the code, you need to install Python [3.10](https://www.python.o
 * serial.tools.list_ports
 * Thread
 * tkinter
+* webbrowser
 
 All modules can be downloaded via the following command, enter the command on a shell (linux) or command prompt (Windows)
 command: **"pip install name"**, substitute the module name for "name"

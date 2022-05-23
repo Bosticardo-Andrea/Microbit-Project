@@ -3,6 +3,7 @@
 * [installation](#installation)
 * [setup](#setup)
 * [modules used](#modules-used)
+* [Files](Files)
 * [What does it do](#What-does-it-do)
 * [Contributor](#Contributor)
 
@@ -28,6 +29,10 @@ Instead, to run the code, you need to install Python [3.10](https://www.python.o
 All modules can be downloaded via the following command, enter the command on a shell (linux) or command prompt (Windows)
 command: **"pip install name"**, substitute the module name for "name"
 
+## Files:
+* [TicTacToeServer]() --> game server, must be started before the client, you must enter the name in the client box first
+* [TicTacToeClient]() --> game client, it must be started after the server, it must send the name after the server has done it
+* [main]() --> main of the Microbit, use [Thonny](https://thonny.org/) or flash the code from this [site](https://python.microbit.org/v/2)
 ## What does it do:
 This project is a microbit-controlled Tris.
 Sockets are used to enable the server and client to communicate.

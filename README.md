@@ -8,7 +8,8 @@
 * [Contributor](#Contributor)
 
 ## installation:
-To be able to view it is enough to have the notepad, better [Visual Studio Code](https://code.visualstudio.com/Download).
+* To be able to view it is enough to have the notepad, better [Visual Studio Code](https://code.visualstudio.com/Download).
+* to run the program and play [python 3.10](https://www.python.org/)
 
 ## setup:
 - Computer
@@ -30,9 +31,9 @@ All modules can be downloaded via the following command, enter the command on a 
 command: **"pip install name"**, substitute the module name for "name"
 
 ## Files:
-* [TicTacToeServer]() --> game server, must be started before the client, you must enter the name in the client box first
-* [TicTacToeClient]() --> game client, it must be started after the server, it must send the name after the server has done it
-* [main]() --> main of the Microbit, use [Thonny](https://thonny.org/) or flash the code from this [site](https://python.microbit.org/v/2)
+* [TicTacToeServer](https://github.com/Bosticardo-Andrea/Microbit-Project/blob/main/TicTacToeServer.py) --> game server, must be started before the client, you must enter the name in the client box first
+* [TicTacToeClient](https://github.com/Bosticardo-Andrea/Microbit-Project/blob/main/TicTacToeClient.py) --> game client, it must be started after the server, it must send the name after the server has done it
+* [main](https://github.com/Bosticardo-Andrea/Microbit-Project) --> main of the Microbit, use [Thonny](https://thonny.org/) or flash the code from this [site](https://python.microbit.org/v/2)
 ## What does it do:
 This project is a microbit-controlled Tris.
 Sockets are used to enable the server and client to communicate.

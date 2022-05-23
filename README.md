@@ -28,3 +28,4 @@ command: **"pip install name"**, substitute the module name for "name"
 ## What does it do:
 
 ### contributor: 
+ @DavideRebuffo

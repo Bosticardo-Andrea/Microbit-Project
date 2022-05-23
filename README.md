@@ -26,6 +26,4 @@ All modules can be downloaded via the following command, enter the command on a 
 command: **"pip install name"**, substitute the module name for "name"
 
 ## What does it do:
-
-### contributor: 
- @DavideRebuffo
+@[DavideRebuffo](https://github.com/DavideRebuffo)

@@ -31,6 +31,7 @@ class MyThread(Thread):
         self.end = 0
         self.connect = connect
         self.ok = False
+        self.x = 0
         self.dizioCoordinate = {0:[61.5,61.5],1:[196.5,61.5],2:[331.5,61.5],3:[61.5,196.5],4:[196.5,200],5:[331.5,196.5],6:[61.5,330.5],7:[196.5,330.5],8:[331.5,330.5]}
     def run(self):
         pygame.init()
@@ -55,7 +56,14 @@ class MyThread(Thread):
                         surf_text = fnt.render(self.griglia[chiave], True, (0,255,0))
                 screen.blit(surf_text, (self.dizioCoordinate[chiave][0]-20.5,self.dizioCoordinate[chiave][1]-50.5))
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:sys.exit()
+                if event.type == pygame.QUIT: sys.exit()
+                if event.type == pygame.KEYDOWN: 
+                    if event.__dict__["unicode"] == "s":
+                        coda.enqueue("a")
+                    if event.__dict__["unicode"] == "d":
+                        coda.enqueue("b")
+                    if event.__dict__["unicode"] == " ":
+                        coda.enqueue("m")  
             TestoG1 = fnt2.render("".join([self.g1," = ",self.giocatori[self.g1]]), True, (255,0,0))
             screen.blit(TestoG1, (10,400))
             TestoG2 = fnt2.render("".join([self.g2," = ",self.giocatori[self.g2]]), True, (0,255,0))
@@ -65,35 +73,47 @@ class MyThread(Thread):
                 if mossa[0] == "a":
                     if self.posizione == 6: self.posizione = 0
                     elif self.posizione == 7: self.posizione = 1
-                    #https://www.galleriameme.it/
                     elif self.posizione == 8: self.posizione = 2
                     else:self.posizione = self.posizione + 3
                 if mossa[0] == "b":
                     if self.posizione == 2 :self.posizione = 0
                     elif self.posizione == 5: self.posizione = 3
                     elif self.posizione == 8: self.posizione = 6
-                    else: self.posizione = self.posizione +  1          
+                    else: self.posizione = self.posizione +  1      
                 if (mossa[0] == "m") and (self.ok):
                     m = self.posizione
                     m = controllo(m,self.g2,self.griglia,self.giocatori)
                     if m != None:
+                        posizionaMossa = pygame.mixer.Sound("pugno.mp3")
+                        posizionaMossa.play()
                         self.connect.sendall(str(m).encode())
                         self.ok = False
+                    else:
+                        erroreMossa = pygame.mixer.Sound("errore.mp3")
+                        erroreMossa.play()
             if self.tipo != None:
                 if self.tipo == 3:
                     pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
                     risultato = fnt3.render("Pareggio", True, (0,0,0))
-                if self.tipo == 1:
-                    pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
-                    pygame.draw.line(screen, (0,0,0), self.inizio, self.end, 10)
-                    risultato = fnt3.render(f"Hai perso:", True, (255,0,0))
                 if self.tipo == 2:
+                    posizionaMossa = pygame.mixer.Sound("you-win.mp3")
+                    posizionaMossa.play()
                     pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
                     pygame.draw.line(screen, (0,0,0), self.inizio, self.end, 10)
                     risultato = fnt3.render(f"Hai vinto", True, (0,255,0))
-                screen.blit(risultato, (10,400))  
+                    posizionaMossa = pygame.mixer.Sound("winner.mp3")
+                    posizionaMossa.play()
+                if self.tipo == 1:
+                    posizionaMossa = pygame.mixer.Sound("loser.mp3")
+                    posizionaMossa.play()
+                    pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
+                    pygame.draw.line(screen, (0,0,0), self.inizio, self.end, 10)
+                    risultato = fnt3.render(f"Hai perso", True, (255,0,0))
+                screen.blit(risultato, (10,400)) 
             pygame.draw.rect(screen,(255,0,0),(self.dizioCoordinate[self.posizione][0]-35,self.dizioCoordinate[self.posizione][1]-35,100,100),2)
-            pygame.display.flip()
+            pygame.display.flip() 
+            if self.x == None:
+                pygame.quit()
     def linea(self,s,e):
         self.inizio,self.end = self.dizioCoordinate[s],self.dizioCoordinate[e]
 class MyThread2(Thread):
@@ -102,23 +122,28 @@ class MyThread2(Thread):
         self.running = True
     def run(self):
         port,microbit = self.letturaPorte()
-        while(port == None): 
+        """while(port == None): 
             port,microbit = self.letturaPorte()
-        while self.running:
-            data = microbit.readline().decode()
-            if(data != ""): 
-                coda.enqueue(data[:-1])
+            time.sleep(1)
+        if port != None:
+            while self.running:
+                data = microbit.readline().decode()
+                if(data != ""): 
+                    coda.enqueue(data[:-1])
     def letturaPorte(self):
         ports = serial.tools.list_ports.comports()
         for port, desc, hwid in sorted(ports):
             #print("{}: {} [{}]".format(port, desc, hwid))
             break
-        if ports == []:  port = None
-        else: 
-            #microbit = serial.Serial(port=port, baudrate=115200, timeout=1)
-            microbit = serial.Serial(port="COM7", baudrate=115200, timeout=1)
-
-        return ports,microbit
+        if ports == []:
+            port = None
+            arduino = None
+        else:
+            try: 
+                arduino = serial.Serial(port=port, baudrate=115200, timeout=1)
+            except Exception as e:
+                arduino,port = None,None
+        return port,arduino
     def stop(self):
         self.running = False
 class GUI(tk.Tk):
@@ -148,7 +173,7 @@ class GUI(tk.Tk):
         gitHub_button.grid(row=4, sticky="WE", pady=0, padx=10)
     def rules(self):
         webbrowser.open_new(r"https://it.wikipedia.org/wiki/Tris_(gioco)")
-    def gitHub():
+    def gitHub(self):
         webbrowser.open_new(r"https://github.com/Bosticardo-Andrea/Microbit-Project")
     def nome(self,):
         if self.text_input.get():
@@ -166,7 +191,7 @@ class GUI(tk.Tk):
 def connessione():
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     s.connect(("127.0.0.1",8000))
-    #s.connect(("192.168.88.146",8000))
+    #s.connect(("192.168.43.165",8000))
     return s,None
 def controllo(x,g,griglia,giocatori):
     if(griglia[x] != " "): 
@@ -205,7 +230,6 @@ def vittoria(griglia,disegno):
     elif( (griglia[2]==griglia[5]==griglia[8]) & (griglia[2]!=" ")):
         disegno.linea(2,8)
         vittoria = True
-        #https://worlds-highest-website.com/it/
     elif ((griglia[0]==griglia[4]==griglia[8]) & (griglia[0]!=" ")):
         disegno.linea(0,8)
         vittoria = True 
@@ -220,60 +244,69 @@ def nome(text_input):
         print(user_input)
     return user_input
 def main():
+    griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
     app = GUI()
     app.mainloop()
     G2 = app.name
     connect,address = connessione()
-    griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
     G1  = connect.recv(4096).decode()
     #G2 = input("Inserisci Giocatore2[O]: ")
     connect.sendall(G2.encode())
     giocatori = {G1:"X",G2:"O"}
-    conta = 1  
-    disegnaGriglia(griglia,giocatori,G1,G2)
-    movimento = MyThread2()
-    movimento.start()
-    disegno = MyThread(griglia,G1,G2,giocatori,connect)
-    disegno.start()
-    while(True ):
-        print(f"{G1}")
-        print(f"Tocca a: {G1}")
-        m = int(connect.recv(4096).decode())
-        griglia[m] = giocatori[G1]
-        os.system('cls')
+    vincite = {G1 : 0, G2 : 0}
+    while ((vincite[G1] - vincite[G2] < 2) or (vincite[G1] - vincite[G2] < 2)):
+        griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
+        conta = 1  
         disegnaGriglia(griglia,giocatori,G1,G2)
-        if(vittoria(griglia,disegno)):
-            print(f"Ha vinto {G1}")
-            disegno.tipo = 1
-            break
-        if(conta <= 8): 
-            conta += 1
-        else: 
-            disegno.tipo = 3
-            break
-        print(f"{G2}")
-        print(f"Tocca a: {G2}")
-        disegno.ok = True
-        os.system('cls')
-        disegnaGriglia(griglia,giocatori,G1,G2)
-        ric = True
-        while disegno.ok == True:
+        movimento = MyThread2()
+        movimento.start()
+        disegno = MyThread(griglia,G1,G2,giocatori,connect)
+        disegno.start()
+        while(True):
+            print(f"{G1}")
+            print(f"Tocca a: {G1}")
+            print("Attendi....")
+            m = int(connect.recv(4096).decode())
+            griglia[m] = giocatori[G1]
+            os.system('cls')
+            disegnaGriglia(griglia,giocatori,G1,G2)
             if(vittoria(griglia,disegno)):
-                print(f"Ha vinto {G2}")
-                disegno.tipo = 2
-                ric = False
+                print(f"Ha vinto {G1}")
+                vincite[G1]+=1
+                disegno.tipo = 1
                 break
-        if ric == False:
-            break
-        if(conta <= 8): 
-            conta += 1
-        else: 
-            disegno.tipo = 3
-            break
-    movimento.stop()
-    movimento.join()
-    time.sleep(3)
-    disegno.running = False
-    disegno.join()
+            if(conta <= 8): 
+                conta += 1
+            else: 
+                disegno.tipo = 3
+                break
+            print(f"{G2}")
+            print(f"Tocca a: {G2}")
+            disegno.ok = True
+            #os.system('cls')
+            #disegnaGriglia(griglia,giocatori,G1,G2)
+            ric = True
+            while disegno.ok == True:
+                if(vittoria(griglia,disegno)):
+                    print(f"Ha vinto {G2}")
+                    vincite[G2]+=1
+                    disegno.tipo = 2
+                    ric = False
+                    break
+            os.system('cls') 
+            disegnaGriglia(griglia,giocatori,G1,G2)
+            if ric == False:
+                break
+            if(conta <= 8): 
+                conta += 1
+            else: 
+                disegno.tipo = 3
+                break
+        time.sleep(3)
+        movimento.stop()
+        movimento.join()
+        disegno.running = False
+        disegno.x = None
+        disegno.join()
 if __name__=="__main__":
     main()                                                                                                                                                                                                                                                                                                                                                                                              #gitHub link: https://github.com/Bosticardo-Andrea/Microbit-Project

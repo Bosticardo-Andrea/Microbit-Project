@@ -18,7 +18,7 @@ class Coda():
         print(self.coda)
 coda = Coda()
 class MyThread(Thread):
-    def __init__(self,griglia,g1,g2,giocatori,connect):
+    def __init__(self,griglia,g1,g2,giocatori,connect,vincite):
         Thread.__init__(self)
         self.running = True
         self.griglia = griglia
@@ -32,6 +32,7 @@ class MyThread(Thread):
         self.connect = connect
         self.ok = False
         self.x = 0
+        self.vincite = vincite
         self.dizioCoordinate = {0:[61.5,61.5],1:[196.5,61.5],2:[331.5,61.5],3:[61.5,196.5],4:[196.5,200],5:[331.5,196.5],6:[61.5,330.5],7:[196.5,330.5],8:[331.5,330.5]}
     def run(self):
         pygame.init()
@@ -64,9 +65,9 @@ class MyThread(Thread):
                         coda.enqueue("b")
                     if event.__dict__["unicode"] == " ":
                         coda.enqueue("m")  
-            TestoG1 = fnt2.render("".join([self.g1," = ",self.giocatori[self.g1]]), True, (255,0,0))
+            TestoG1 = fnt2.render("".join([self.g1," = ",self.giocatori[self.g1], " - vittorie: ",str(self.vincite[self.g1])]), True, (255,0,0))
             screen.blit(TestoG1, (10,400))
-            TestoG2 = fnt2.render("".join([self.g2," = ",self.giocatori[self.g2]]), True, (0,255,0))
+            TestoG2 = fnt2.render("".join([self.g2," = ",self.giocatori[self.g2]," - vittorie: ",str(self.vincite[self.g2])]), True, (0,255,0))
             screen.blit(TestoG2, (10,425))
             mossa = str(coda.dequeue())
             if mossa != None:
@@ -96,16 +97,14 @@ class MyThread(Thread):
                     pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
                     risultato = fnt3.render("Pareggio", True, (0,0,0))
                 if self.tipo == 2:
-                    posizionaMossa = pygame.mixer.Sound("you-win.mp3")
-                    posizionaMossa.play()
+                    w = pygame.mixer.Sound("winner.mp3")
+                    w.play()
                     pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
                     pygame.draw.line(screen, (0,0,0), self.inizio, self.end, 10)
                     risultato = fnt3.render(f"Hai vinto", True, (0,255,0))
-                    posizionaMossa = pygame.mixer.Sound("winner.mp3")
-                    posizionaMossa.play()
                 if self.tipo == 1:
-                    posizionaMossa = pygame.mixer.Sound("loser.mp3")
-                    posizionaMossa.play()
+                    loser = pygame.mixer.Sound("loser.mp3")
+                    loser.play()
                     pygame.draw.rect(screen,(255,255,255),(0,400,400,75),0)
                     pygame.draw.line(screen, (0,0,0), self.inizio, self.end, 10)
                     risultato = fnt3.render(f"Hai perso", True, (255,0,0))
@@ -122,7 +121,7 @@ class MyThread2(Thread):
         self.running = True
     def run(self):
         port,microbit = self.letturaPorte()
-        """while(port == None): 
+        while(port == None): 
             port,microbit = self.letturaPorte()
             time.sleep(1)
         if port != None:
@@ -254,13 +253,13 @@ def main():
     connect.sendall(G2.encode())
     giocatori = {G1:"X",G2:"O"}
     vincite = {G1 : 0, G2 : 0}
-    while ((vincite[G1] - vincite[G2] < 2) or (vincite[G1] - vincite[G2] < 2)):
+    while ((vincite[G1] - vincite[G2] <= 2) or (vincite[G1] - vincite[G2] <= 2)):
         griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
         conta = 1  
         disegnaGriglia(griglia,giocatori,G1,G2)
         movimento = MyThread2()
         movimento.start()
-        disegno = MyThread(griglia,G1,G2,giocatori,connect)
+        disegno = MyThread(griglia,G1,G2,giocatori,connect,vincite)
         disegno.start()
         while(True):
             print(f"{G1}")
@@ -304,7 +303,6 @@ def main():
                 break
         time.sleep(3)
         movimento.stop()
-        movimento.join()
         disegno.running = False
         disegno.x = None
         disegno.join()

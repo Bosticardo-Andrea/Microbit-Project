@@ -63,6 +63,10 @@ class MyThread(Thread):
                         coda.enqueue("a")
                     if event.__dict__["unicode"] == "d":
                         coda.enqueue("b")
+                    if event.__dict__["unicode"] == "w":
+                        coda.enqueue("w")
+                    if event.__dict__["unicode"] == "a":
+                        coda.enqueue("z")
                     if event.__dict__["unicode"] == " ":
                         coda.enqueue("m")  
             TestoG1 = fnt2.render("".join([self.g1," = ",self.giocatori[self.g1], " - vittorie: ",str(self.vincite[self.g1])]), True, (255,0,0))
@@ -80,7 +84,17 @@ class MyThread(Thread):
                     if self.posizione == 2 :self.posizione = 0
                     elif self.posizione == 5: self.posizione = 3
                     elif self.posizione == 8: self.posizione = 6
-                    else: self.posizione = self.posizione +  1      
+                    else: self.posizione = self.posizione +  1
+                if mossa[0] == "w":
+                    if self.posizione == 0: self.posizione = 6
+                    elif self.posizione == 1: self.posizione = 7
+                    elif self.posizione == 2: self.posizione = 8
+                    else:self.posizione = self.posizione - 3
+                if mossa[0] == "z":
+                    if self.posizione == 0 :self.posizione = 2
+                    elif self.posizione == 3: self.posizione = 5
+                    elif self.posizione == 6: self.posizione = 8
+                    else: self.posizione = self.posizione -  1
                 if (mossa[0] == "m") and (self.ok):
                     m = self.posizione
                     m = controllo(m,self.g2,self.griglia,self.giocatori)

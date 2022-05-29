@@ -6,6 +6,7 @@
 * [Files](Files)
 * [What does it do](#What-does-it-do)
 * [Contributor](#Contributor)
+* [Rules]rules)
 
 ## installation:
 * To be able to view it is enough to have the notepad, better [Visual Studio Code](https://code.visualstudio.com/Download).
@@ -27,6 +28,7 @@ Instead, to run the code, you need to install Python [3.10](https://www.python.o
 * Thread
 * tkinter
 * webbrowser
+* random
 
 All modules can be downloaded via the following command, enter the command on a shell (linux) or command prompt (Windows)
 command: **"pip install name"**, substitute the module name for "name"
@@ -43,6 +45,10 @@ To move inside the field you have to press the A (down), B (right) keys, while m
 to run the code you must be on the Wifi network, moreover, you need to know your IP, (if you don't know how to do it click here) and change these lines:
 - [client](https://github.com/Bosticardo-Andrea/Microbit-Project/blob/main/TicTacToeClient.py): line 163 add to it with: "s.connect ((" Your IP ", 8000))"
 - [server](https://github.com/Bosticardo-Andrea/Microbit-Project/blob/main/TicTacToeServer.py): line 159 substituted with: "s.connect ((" Your IP ", 8000))"
-
+## Rules:
+Who starts is decided at random by the program
+Who starts is decided randomly by the program, who starts will have the symbol [X], while the second [O]
+To end the game you must win 3 times, always starting the same player chosen at the beginning
+Start placing your symbols in turn in the pattern you created. The first round wins the player who aligns his three symbols both horizontally and vertically or diagonally. However, there is the possibility that the round could end in a draw, in that circumstance the point will not be awarded to any player and you will have to continue with the next round.
 ## Contributor:
 @[DavideRebuffo](https://github.com/DavideRebuffo)

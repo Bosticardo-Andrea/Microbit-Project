@@ -16,7 +16,7 @@
 - Computer
 - [Microbit](https://www.microbit.org/) 
 
-Instead, to run the code, you need to install Python [3.10](https://www.python.org/downloads/)
+Instead, to run the code, you need to install [Python 3.10](https://www.python.org/downloads/)
 ## modules used:
 * socket
 * os

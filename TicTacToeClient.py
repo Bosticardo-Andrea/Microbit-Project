@@ -1,6 +1,7 @@
 #made by Bosticado Andrea and Rebuffo Davide
 #Istruzioni:https://it.wikipedia.org/wiki/Tris_(gioco)
 import socket,os,time,pygame,sys,serial,webbrowser
+from turtle import color
 import serial.tools.list_ports
 from threading import Thread
 import tkinter as tk 
@@ -37,6 +38,8 @@ class MyThread(Thread):
         fnt3 = pygame.font.SysFont("Times New Roman", 50)
         screen = pygame.display.set_mode(size)
         BLUNOTTE = (0,0,102)
+        VERDE = (0,51,0)
+        ARANCIONE = (255,153,51)
         while self.running:
             screen.fill((255,255,255))
             pygame.draw.rect(screen,(0,0,0),(130,10,5,380))
@@ -46,8 +49,8 @@ class MyThread(Thread):
             for chiave in self.dizioCoordinate:
                 if self.griglia[chiave] == " ":surf_text = fnt.render(str(chiave), True, BLUNOTTE)
                 else:
-                    if self.griglia[chiave] == "X":surf_text = fnt.render(self.griglia[chiave], True, BLUNOTTE)
-                    else:surf_text = fnt.render(self.griglia[chiave], True, BLUNOTTE)
+                    if self.griglia[chiave] == "X":surf_text = fnt.render(self.griglia[chiave], True, VERDE)
+                    else:surf_text = fnt.render(self.griglia[chiave], True, ARANCIONE)
                 screen.blit(surf_text, (self.dizioCoordinate[chiave][0]-20.5,self.dizioCoordinate[chiave][1]-50.5))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: sys.exit()
@@ -58,14 +61,14 @@ class MyThread(Thread):
                     if event.__dict__["unicode"] == "a":coda.enqueue("z")
                     if event.__dict__["unicode"] == " ":coda.enqueue("m")  
             if self.ok: 
-                TestoG1 = fnt2.render("".join([self.g1," = ",self.giocatori[self.g1], " - vittorie: ",str(self.vincite[self.g1])]), True, BLUNOTTE)
+                TestoG1 = fnt2.render("".join([self.g1," = ",self.giocatori[self.g1], " - vittorie: ",str(self.vincite[self.g1])]), True, VERDE)
                 screen.blit(TestoG1, (10,400)) 
-                TestoG2 = fnt2.render("".join(["* ",self.g2," = ",self.giocatori[self.g2]," - vittorie: ",str(self.vincite[self.g2])]), True, BLUNOTTE)
+                TestoG2 = fnt2.render("".join(["* ",self.g2," = ",self.giocatori[self.g2]," - vittorie: ",str(self.vincite[self.g2])]), True, ARANCIONE)
                 screen.blit(TestoG2, (10,425))
             else:
-                TestoG1 = fnt2.render("".join(["* ",self.g1," = ",self.giocatori[self.g1], " - vittorie: ",str(self.vincite[self.g1])]), True, BLUNOTTE)
+                TestoG1 = fnt2.render("".join(["* ",self.g1," = ",self.giocatori[self.g1], " - vittorie: ",str(self.vincite[self.g1])]), True, VERDE)
                 screen.blit(TestoG1, (10,400)) 
-                TestoG2 = fnt2.render("".join([self.g2," = ",self.giocatori[self.g2]," - vittorie: ",str(self.vincite[self.g2])]), True, BLUNOTTE)
+                TestoG2 = fnt2.render("".join([self.g2," = ",self.giocatori[self.g2]," - vittorie: ",str(self.vincite[self.g2])]), True, ARANCIONE)
                 screen.blit(TestoG2, (10,425))
             mossa = str(coda.dequeue())
             if mossa != None:
@@ -351,10 +354,13 @@ def main():
         disegno.start()
         if inizio == G1:secondo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta)
         else: primo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta)
-        time.sleep(3)
+        time.sleep(5)
         movimento.stop()
         disegno.running = False
         disegno.x = None
         disegno.join()
+    movimento.join()
+    disegno.join()
+    sys.exit()
 if __name__=="__main__":
     main()                                                                                                                                                                                                                                                                                                                                                                                              #gitHub link: https://github.com/Bosticardo-Andrea/Microbit-Project

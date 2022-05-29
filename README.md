@@ -6,7 +6,7 @@
 * [Files](Files)
 * [What does it do](#What-does-it-do)
 * [Contributor](#Contributor)
-* [Rules](rules)
+* [Rules](#Rules)
 
 ## installation:
 * To be able to view it is enough to have the notepad, better [Visual Studio Code](https://code.visualstudio.com/Download).

@@ -57,7 +57,7 @@ class MyThread(Thread):
                     if event.__dict__["unicode"] == "d":coda.enqueue("b")
                     if event.__dict__["unicode"] == "w":coda.enqueue("w")
                     if event.__dict__["unicode"] == "a":coda.enqueue("z")
-                    if event.__dict__["unicode"] == " ":coda.enqueue("m")   
+                    if event.__dict__["unicode"] == " ":coda.enqueue("m")
             if self.ok: 
                 TestoG1 = fnt2.render("".join(["* ",self.g1," = ",self.giocatori[self.g1], " - vittorie: ",str(self.vincite[self.g1])]), True, VERDE)
                 screen.blit(TestoG1, (10,400)) 
@@ -89,9 +89,11 @@ class MyThread(Thread):
                     if self.posizione == 0 :self.posizione = 2
                     elif self.posizione == 3: self.posizione = 5
                     elif self.posizione == 6: self.posizione = 8
-                    else: self.posizione = self.posizione -  1      
+                    else: self.posizione = self.posizione -  1  
+                #check that it is the player's turn and that a move has been made in the queue   
                 if (mossa[0] == "m") and (self.ok):
                     m = self.posizione
+                    #check if the move is valid
                     m = controllo(m,self.g1,self.griglia,self.giocatori)
                     if m != None:
                         posizionaMossa = pygame.mixer.Sound("suoni/pugno.mp3")
@@ -127,49 +129,60 @@ class MyThread(Thread):
             if self.x == None:pygame.quit()
     def linea(self,s,e):
         self.inizio,self.end = self.dizioCoordinate[s],self.dizioCoordinate[e]
-class MyThread2(Thread):
+class LetturaSeriale(Thread):
     def __init__(self):
         Thread.__init__(self)
         self.running = True
     def run(self):
+        #I read the ports
         port,microbit = self.letturaPorte()
+        #if I have found something connected to the ports I listen to them otherwise I continue the search
         while(port == None): 
             port,microbit = self.letturaPorte()
             time.sleep(1)
         if port != None:
             while self.running:
+                # I read the serial port
                 data = microbit.readline().decode()
-                if(data != ""): 
+                if(data != ""): #check that it's not empty
+                    # I put it in the queue
                     coda.enqueue(data[:-1])
     def letturaPorte(self):
         ports = serial.tools.list_ports.comports()
+        #I check all the ports and connect to the first one
         for port, desc, hwid in sorted(ports):
-            #print("{}: {} [{}]".format(port, desc, hwid))
+            print("{}: {} [{}]".format(port, desc, hwid))
             break
         if ports == []:
             port = None
-            arduino = None
+            microbit = None
         else:
-            try: 
-                arduino = serial.Serial(port=port, baudrate=115200, timeout=1)
+            try: #I connect to the serial
+                microbit = serial.Serial(port=port, baudrate=115200, timeout=1)
             except Exception as e:
-                arduino,port = None,None
-        return port,arduino
+                microbit,port = None,None
+        return port,microbit
     def stop(self):
         self.running = False
+#Graph Tkinter to read the name
 class GUI(tk.Tk):
     def __init__(self):
         super().__init__()
+        #initialize the screen
         self.geometry('500x250')
         self.title("Nome")
+        #I set up the grill
         self.grid_columnconfigure(0, weight=1)
+        ##create the text widget
         self.textwidget = tk.Label(self,
                                     text="Inserire il nome, poi chiudere la finestra\n",
                                     font=("Helvetica", 15))
         self.text_input = tk.Entry()
         self.name = "giocatore 1"
+        #function create = loop
         self.crea()
     def crea(self):
+        #I create the different objects: buttons and text labels
         welcome_label = tk.Label(self,
                                     text="Inserisci il tuo nome",
                                     font=("Helvetica", 15))
@@ -182,10 +195,12 @@ class GUI(tk.Tk):
         link_button.grid(row=3, sticky="WE", pady=0, padx=10)
         gitHub_button = tk.Button(text="gitHub", command=self.gitHub)
         gitHub_button.grid(row=4, sticky="WE", pady=0, padx=10)
+    #functions for links
     def rules(self):
         webbrowser.open_new(r"https://it.wikipedia.org/wiki/Tris_(gioco)")
     def gitHub(self):
         webbrowser.open_new(r"https://github.com/Bosticardo-Andrea/Microbit-Project")
+    #functions to take the name and display it
     def nome(self,):
         if self.text_input.get():
             user_input = self.text_input.get()
@@ -201,8 +216,8 @@ class GUI(tk.Tk):
         self.textwidget.grid(row=2, column=0, sticky="WE", padx=10, pady=10)
 def connessione():
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    #s.bind(("192.168.43.165",8000))
-    s.bind(("127.0.0.1",8000))
+    s.bind(("192.168.0.112",8000))
+    #s.bind(("127.0.0.1",8000))
     s.listen()
     print("In attesa di connessione...")
     connect,address = s.accept()
@@ -332,9 +347,11 @@ def secondo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta):
                 disegno.tipo = 3
                 break
 def main():
+
     griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
     app = GUI()
     app.mainloop()
+    # I take the name from the GUI and wait for a connection
     G1 = app.name
     #inserisciNome.start()
     connect,address = connessione()
@@ -343,20 +360,27 @@ def main():
     G2 = connect.recv(4096).decode()
     giocatori = {G1:"X",G2:"O"}
     vincite = {G1 : 0, G2 : 0}
+    # I draw a player by lot
     inizio = random.choice(list(giocatori.keys()))
+    #Send the extracted player
     connect.sendall(inizio.encode())
+    ##exchange players in case the server doesn't start
     if inizio == G2: G1,G2 = G2,G1
+    #check if someone has won at least 3 times
     while ((vincite[G1] - vincite[G2] <= 2) or(vincite[G1] - vincite[G2] <= 2)):
+        #I start everything and start with the game
         griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
         conta = 1 
         os.system('cls') 
         disegnaGriglia(griglia,giocatori,G1,G2)
-        movimento = MyThread2()
+        movimento = LetturaSeriale()
         movimento.start()
         disegno = MyThread(griglia,G1,G2,giocatori,connect,vincite)
         disegno.start()
+        #starts who has been extracted
         if inizio == G1:primo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta)
         else:secondo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta)
+        #I wait 5 seconds and then I close everything to start the whole thing over
         time.sleep(5)
         movimento.stop()
         disegno.running = False

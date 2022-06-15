@@ -438,11 +438,19 @@ def doppio(G1):
     disegno.join()
     sys.exit()
 def solo(griglia,g1,g2, level):
-    giocatori = giocatori = {g1:"X",g2:"O"}
+    giocatori = {g1:"X",g2:"O"}
     vincite = {g1 : 0, g2 : 0}
-    prima_volta = False
-    inizio = 1
     m = None
+    prima_volta = False
+    sorteggio = random.choice(list(giocatori.keys()))
+    if sorteggio == g1:
+        prima_volta=False
+        inizio = 1
+    else:
+        prima_volta = True
+        inizio = 2
+    print(sorteggio,prima_volta)
+    time.sleep(1)
     while 1:
         if (vincite[g1] - vincite[g2] >= 2) or (vincite[g2] - vincite[g1] >= 2):
             break

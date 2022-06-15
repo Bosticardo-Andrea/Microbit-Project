@@ -4,6 +4,10 @@ import socket,os,time,pygame,sys,serial,webbrowser,random
 import serial.tools.list_ports
 from threading import Thread
 import tkinter as tk 
+from TicTacToe import GameController
+from easyAI import TwoPlayersGame, AI_Player, Negamax
+from easyAI.Player import Human_Player
+from copy import deepcopy
 class Coda():
     def __init__(self):self.coda=[]
     def enqueue(self,elemento):self.coda.append(elemento)
@@ -12,7 +16,7 @@ class Coda():
         else:return None
 coda = Coda()
 class MyThread(Thread):
-    def __init__(self,griglia,g1,g2,giocatori,connect,vincite):
+    def __init__(self,griglia,g1,g2,giocatori,connect,vincite,TicTacToe):
         Thread.__init__(self)
         self.running = True
         self.griglia = griglia
@@ -27,6 +31,8 @@ class MyThread(Thread):
         self.ok = True
         self.x = 0
         self.vincite = vincite
+        self.TicTacToe = TicTacToe
+        self.mossa = None
         self.dizioCoordinate = {0:[61.5,61.5],1:[196.5,61.5],2:[331.5,61.5],3:[61.5,196.5],4:[196.5,200],5:[331.5,196.5],6:[61.5,330.5],7:[196.5,330.5],8:[331.5,330.5]}
     def run(self):
         pygame.init()
@@ -98,7 +104,10 @@ class MyThread(Thread):
                     if m != None:
                         posizionaMossa = pygame.mixer.Sound("suoni/pugno.mp3")
                         posizionaMossa.play()
-                        self.connect.sendall(str(m).encode())
+                        if self.connect != None:
+                            self.connect.sendall(str(m).encode())
+                        else:
+                            self.setMossa(m)
                         self.ok = False
                     else:
                         erroreMossa = pygame.mixer.Sound("suoni/errore.mp3")
@@ -129,6 +138,8 @@ class MyThread(Thread):
             if self.x == None:pygame.quit()
     def linea(self,s,e):
         self.inizio,self.end = self.dizioCoordinate[s],self.dizioCoordinate[e]
+    def setMossa(self, m):
+        self.mossa = m
 class LetturaSeriale(Thread):
     def __init__(self):
         Thread.__init__(self)
@@ -164,28 +175,40 @@ class LetturaSeriale(Thread):
         return port,microbit
     def stop(self):
         self.running = False
+OptionList = [
+            "7-Impossibile",
+            "6-Esperto",
+            "5-Complicato",
+            "4-Medio",
+            "3-Facile",
+            "2-elemnetare",
+            "1-Noob",
+            ]  
 #Graph Tkinter to read the name
 class GUI(tk.Tk):
     def __init__(self):
         super().__init__()
         #initialize the screen
+        self.var1 = tk.IntVar()
         self.geometry('500x250')
         self.title("Nome")
+        self.level = 7
         #I set up the grill
         self.grid_columnconfigure(0, weight=1)
         ##create the text widget
+        self.variable = tk.StringVar(self)
+        self.variable.set("Seleziona un livello di difficoltá")
         self.textwidget = tk.Label(self,
-                                    text="Inserire il nome, poi chiudere la finestra\n",
+                                    text="Inserire il nome, poi premere Enter\n",
                                     font=("Helvetica", 15))
         self.text_input = tk.Entry()
+        self.opt = tk.OptionMenu(self, self.variable, *OptionList)
         self.name = "giocatore 1"
         #function create = loop
         self.crea()
     def crea(self):
         #I create the different objects: buttons and text labels
-        welcome_label = tk.Label(self,
-                                    text="Inserisci il tuo nome",
-                                    font=("Helvetica", 15))
+        welcome_label = tk.Label(self,text="Inserisci il tuo nome",font=("Helvetica", 15))
         welcome_label.grid(row=0, column=0, sticky="WE", padx=10, pady=10)                       
         self.text_input.grid(row=1, column=0, sticky="WE", padx=10)
         self.textwidget.grid(row=2, column=0, sticky="N", padx=10, pady=10)
@@ -195,7 +218,31 @@ class GUI(tk.Tk):
         link_button.grid(row=3, sticky="WE", pady=0, padx=10)
         gitHub_button = tk.Button(text="gitHub", command=self.gitHub)
         gitHub_button.grid(row=4, sticky="WE", pady=0, padx=10)
+        solo_button = tk.Button(text="Solo Mode", command=self.check)
+        solo_button.grid(row=5, sticky="WE", pady=0, padx=10)
+        c1 = tk.Checkbutton(self, text='Solo Mode',variable=self.var1, onvalue=1, offvalue=0)#command=print_selection
+        c1.grid(row=5,column=1, sticky="N", pady=0, padx=10)
+        if self.var1.get() == 1:
+            welcome_label.destroy()
+            welcome_label = tk.Label(self,text='If this button is checked you are playing alone against an AI',font=("Times New Roman", 12))
+            welcome_label.grid(row=6, column=0, sticky="WE", padx=10, pady=10)  
+        else:
+            welcome_label.destroy()
+            welcome_label = tk.Label(self,text='If this button is checked you are playing alone against an AI',font=("Times New Roman", 12))
+            welcome_label.grid(row=7, column=0, sticky="WE", padx=10, pady=10)
+        self.variable.trace("w", self.callback) 
     #functions for links
+    def callback(self,*arg):
+        self.level = self.variable.get().split("-")[0]
+    def check(self):
+        if self.var1.get() == 1:
+            self.var1.set(0)
+            self.opt.destroy()
+            self.opt = tk.OptionMenu(self, self.variable, *OptionList)
+        else:
+            self.opt.config(height=1,font=('Helvetica', 12))
+            self.opt.grid(row=6,column=0, sticky="WE", pady=10, padx=10)
+            self.var1.set(1)
     def rules(self):
         webbrowser.open_new(r"https://it.wikipedia.org/wiki/Tris_(gioco)")
     def gitHub(self):
@@ -207,8 +254,9 @@ class GUI(tk.Tk):
             nome = user_input
             self.name = user_input
             print(self.name)
+            self.destroy()
         else:
-            nome = "Inserire il nome, poi chiudere la finestra\n"
+            nome = "Inserire il nome, poi premere Enter\n"
         self.textwidget.destroy()
         self.textwidget = tk.Label(self,
                                     text=nome,
@@ -216,8 +264,8 @@ class GUI(tk.Tk):
         self.textwidget.grid(row=2, column=0, sticky="WE", padx=10, pady=10)
 def connessione():
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    s.bind(("192.168.0.112",8000))
-    #s.bind(("127.0.0.1",8000))
+    #s.bind(("192.168.88.98",8000))
+    s.bind(("127.0.0.1",8000))
     s.listen()
     print("In attesa di connessione...")
     connect,address = s.accept()
@@ -291,7 +339,10 @@ def primo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta):
             print(f"{G2}")
             print(f"Tocca a: {G2}")
             print("Attendi....")
-            m = int(connect.recv(4096).decode())
+            if connect != None:
+                m = int(connect.recv(4096).decode())
+            else:
+                pass
             griglia[m] = giocatori[G2]
             os.system('cls')
             disegnaGriglia(griglia,giocatori,G1,G2)
@@ -310,7 +361,10 @@ def secondo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta):
             print(f"{G1}")
             print(f"Tocca a: {G1}")
             print("Attendi....")
-            m = int(connect.recv(4096).decode())
+            if connect != None:
+                m = int(connect.recv(4096).decode())
+            else:
+                pass
             griglia[m] = giocatori[G1]
             os.system('cls')
             disegnaGriglia(griglia,giocatori,G1,G2)
@@ -346,13 +400,7 @@ def secondo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta):
             else: 
                 disegno.tipo = 3
                 break
-def main():
-
-    griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
-    app = GUI()
-    app.mainloop()
-    # I take the name from the GUI and wait for a connection
-    G1 = app.name
+def doppio(G1):
     #inserisciNome.start()
     connect,address = connessione()
     #G1 = input("Inserisci Giocatore1[X]: ")e
@@ -375,7 +423,7 @@ def main():
         disegnaGriglia(griglia,giocatori,G1,G2)
         movimento = LetturaSeriale()
         movimento.start()
-        disegno = MyThread(griglia,G1,G2,giocatori,connect,vincite)
+        disegno = MyThread(griglia,G1,G2,giocatori,connect,vincite,None)
         disegno.start()
         #starts who has been extracted
         if inizio == G1:primo(G1,G2,disegno,vincite,griglia,giocatori,connect,conta)
@@ -389,5 +437,83 @@ def main():
     movimento.join()
     disegno.join()
     sys.exit()
+def solo(griglia,g1,g2, level):
+    giocatori = giocatori = {g1:"X",g2:"O"}
+    vincite = {g1 : 0, g2 : 0}
+    prima_volta = False
+    inizio = 1
+    m = None
+    while 1:
+        if (vincite[g1] - vincite[g2] >= 2) or (vincite[g2] - vincite[g1] >= 2):
+            break
+        griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
+        algorithm = Negamax(level) # 7 (imbattibile)
+        disegno = MyThread(griglia,g1,g2,giocatori,None,vincite,None)
+        disegno.start()
+        gioco_tris = GameController([Human_Player(), AI_Player(algorithm)],inizio)
+        while True:
+            if prima_volta:
+                mossa_robot = gioco_tris.inizio_mossa_robot()
+                if  mossa_robot != None:
+                    mb = mossa_robot
+                    griglia[int(mb)] = giocatori[g2]
+                    os.system("cls")
+                    disegnaGriglia(griglia,giocatori,g1,g2)
+                    prima_volta = False
+            else:
+                """m = (int(input("inserisci un numero: ")))
+                while (m not in gioco_tris.possible_moves()):
+                    print(gioco_tris.possible_moves())
+                    m = (int(input("inserisci un numero: ")))
+                    #print(gioco_tris.possible_moves())"""
+                while disegno.ok: pass
+                if disegno.mossa != None:
+                    m = disegno.mossa
+                    griglia[int(disegno.mossa)] = giocatori[g1]
+                    os.system("cls")
+                    os.system("cls")
+                    disegnaGriglia(griglia,giocatori,g1,g2)
+                    disegno.setMossa(None)
+                else:
+                    mossa_robot = gioco_tris.play(m)
+                    if "Partita finita" not in str(mossa_robot):
+                        mb = mossa_robot
+                        griglia[int(mb)] = giocatori[g2]
+                        os.system("cls")
+                        disegnaGriglia(griglia,giocatori,g1,g2)
+                        disegno.ok = True
+                isover, vincitore = gioco_tris.is_over_2()
+                x = vittoria(griglia,disegno)
+                if isover :
+                    print(vincitore)
+                    if "Ho vinto!" in vincitore:
+                        vincite[g2] += 1
+                        disegno.tipo = 2
+                    elif "Complimenti hai vinto!" in vincitore:
+                        vincite[g1] += 1
+                        disegno.tipo = 1
+                    if inizio == 1:
+                        inizio = 2
+                        prima_volta = True
+                    else:
+                        inizio = 1
+                    time.sleep(3)
+                    disegno.running = False
+                    disegno.x = None
+                    disegno.join()
+                    break
+def main():
+    griglia = {0: " ", 1: " ",2: " ",3: " ",4: " ",5: " ",6: " ",7: " ",8: " "}
+    app = GUI()
+    app.mainloop()
+    # I take the name from the GUI and wait for a connection
+    soloMode = app.var1.get()
+    G1 = app.name
+    os.system("cls")
+    if soloMode == 1:
+        level = app.level
+        solo(griglia,G1,"AI",level)
+    else:
+        doppio(G1)
 if __name__=="__main__":
     main()                                                                                                                                                                                                                                                                                                                                                                                              #gitHub link: https://github.com/Bosticardo-Andrea/Microbit-Project
